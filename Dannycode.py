@@ -1,7 +1,4 @@
 from music21 import converter, note, chord
-import time
-
-mainList = []
 
 # Load the MusicXML file
 xml_file = "Beethoven7th_chorus_only.mxl"  # Replace with your file path
@@ -36,58 +33,3 @@ note_data.sort(key=lambda x: x[0])
 for entry in note_data:
     absolute_time, notes, duration, part_name = entry
     print(f"Time: {absolute_time:.2f} beats | Notes: {notes} | Duration: {duration} beats | Part: {part_name}")
-
-
-def convertNOTE(note):
-
-        if note[0:1] == "C":
-            num = 12
-        if note[0:2] == "C#":
-            num = 11
-        if note[0:1] == "D":
-            num = 10
-        if note[0:2] == "D#":
-            num = 9
-        if note[0:1] == "E":
-            num = 8
-        if note[0:1] == "F":
-            num = 7
-        if note[0:2] == "F#":
-            num = 6
-        if note[0:1] == "G":
-            num = 5
-        if note[0:2] == "G#":
-            num = 4
-        if note[0:1] == "A":
-            num = 3
-        if note[0:2] == "A#":
-            num = 2
-        if note[0:1] == "B":
-            num = 1
-
-        if note[-1] == "t":
-            return note
-
-        return int(note[-1]) * 12 - num
-
-for entry in note_data:
-    absolute_time, notes, duration, part_name = entry
-
-    tempList = []
-
-    if part_name[0:1] == "A":
-
-        for note in notes:
-            tempList.append(convertNOTE(note))
-
-        tempList.append(duration)
-
-    if tempList != []:
-        mainList.append(tempList)
-
-
-music = open("music.txt", "w")
-music.write(str(mainList))
-music.close()
-            
-    
