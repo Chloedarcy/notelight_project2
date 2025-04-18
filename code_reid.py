@@ -68,7 +68,9 @@ def convertNOTE(note):
         if note[-1] == "t":
             return note
 
-        return int(note[-1]) * 12 - num
+        # forr 88 keys return int(note[-1]) * 12 - num
+        #for 12 keys
+        return 12 - num
 
 for entry in note_data:
     absolute_time, notes, duration, part_name = entry
