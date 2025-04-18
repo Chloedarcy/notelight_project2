@@ -1,65 +1,105 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <string>
-#include <cstdlib>  // For system()
+// led_music_player.cpp (PlatformIO version using SPIFFS)
 
-int main() {
-    system("clear"); // Use "cls" for Windows
+#include <LiquidCrystal.h>
+#include <FastLED.h>
+#include <FS.h>
+#include <SPIFFS.h>
 
-    std::ifstream inputFile("music.txt");
-    if (!inputFile) {
-        std::cerr << "Error: Could not open input.txt" << std::endl;
-        return 1;
+#define NUM_LEDS 88
+#define DATA_PIN 0
+#define MAX_STEPS 128
+
+CRGB leds[NUM_LEDS];
+
+const int rs = 13, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+struct NoteStep {
+    bool isRest;
+    float noteIndex;
+    float duration;
+};
+
+NoteStep sequence[MAX_STEPS];
+int sequenceLength = 0;
+
+void loadMusicFile() {
+    File file = SPIFFS.open("/music.txt", FILE_READ);
+    if (!file) {
+        lcd.setCursor(0, 0);
+        lcd.print("File error");
+        return;
     }
 
-    std::stringstream buffer;
-    buffer << inputFile.rdbuf();
-    std::string content = buffer.str();
-    inputFile.close();
+    while (file.available() && sequenceLength < MAX_STEPS) {
+        String line = file.readStringUntil('\n');
+        line.trim();
+        if (line.length() == 0) continue;
 
-    std::vector<std::vector<std::string>> listOfLists;
-    std::vector<std::string> currentList;
-    std::string token;
-    bool inString = false;
+        line.replace("[", "");
+        line.replace("]", "");
+        line.replace("\"", "");
+        line.replace("'", "");
 
-    for (size_t i = 0; i < content.size(); ++i) {
-        char c = content[i];
+        int sep = line.indexOf(',');
+        if (sep == -1) continue;
 
-        if (c == '"' || c == '\'') {
-            inString = !inString;
-            continue;
-        }
+        String noteStr = line.substring(0, sep);
+        String durStr = line.substring(sep + 1);
 
-        if (inString) {
-            token += c;
-        } else if (std::isalnum(c) || c == '.' || c == '-' || c == '_') {
-            token += c;
+        noteStr.trim();
+        durStr.trim();
+
+        NoteStep step;
+        step.isRest = noteStr.equalsIgnoreCase("rest");
+        step.noteIndex = step.isRest ? 0.0 : noteStr.toFloat();
+        step.duration = durStr.toFloat();
+
+        sequence[sequenceLength++] = step;
+    }
+    file.close();
+}
+
+void setup() {
+    FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+    lcd.begin(16, 2);
+    lcd.clear();
+
+    if (!SPIFFS.begin(true)) {
+        lcd.setCursor(0, 0);
+        lcd.print("SPIFFS Failed");
+        while (true);
+    }
+
+    loadMusicFile();
+}
+
+void loop() {
+    for (int i = 0; i < sequenceLength; ++i) {
+        NoteStep step = sequence[i];
+
+        fill_solid(leds, NUM_LEDS, CRGB::Black);
+
+        if (step.isRest) {
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Rest");
         } else {
-            if (!token.empty()) {
-                currentList.push_back(token);
-                token.clear();
-            }
-            if (c == ']') {
-                if (!currentList.empty()) {
-                    listOfLists.push_back(currentList);
-                    currentList.clear();
-                }
-            }
-        }
-    }
+            int ledIndex = constrain(int(step.noteIndex) - 21, 0, NUM_LEDS - 1);
+            leds[ledIndex] = CRGB::Red;
 
-    // Print result
-    std::cout << "Parsed list of lists:\n";
-    for (const auto& row : listOfLists) {
-        std::cout << "[";
-        for (size_t i = 0; i < row.size(); ++i) {
-            std::cout << '"' << row[i] << '"';
-            if (i < row.size() - 1) std::cout << ", ";
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Note: ");
+            lcd.print(step.noteIndex);
         }
-        std::cout << "]\n";
-    }
 
-    return 0;
+        FastLED.show();
+        delay(step.duration * 1000);
+
+        fill_solid(leds, NUM_LEDS, CRGB::Black);
+        FastLED.show();
+        delay(100);
+    }
+    delay(2000);
 }
