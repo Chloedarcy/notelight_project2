@@ -1,18 +1,17 @@
 // led_music_player.cpp (PlatformIO version using SPIFFS)
 
-#include <LiquidCrystal.h>
+/*#include <LiquidCrystal_I2C.h>
 #include <FastLED.h>
 #include <FS.h>
 #include <SPIFFS.h>
 
-#define NUM_LEDS 88
+#define NUM_LEDS 12 
 #define DATA_PIN 0
 #define MAX_STEPS 128
 
 CRGB leds[NUM_LEDS];
 
-const int rs = 13, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+LiquidCrystal_I2C lcd(0x27, 20, 4); 
 
 struct NoteStep {
     bool isRest;
@@ -62,8 +61,10 @@ void loadMusicFile() {
 
 void setup() {
     FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
-    lcd.begin(16, 2);
+    lcd.init();
+    lcd.backlight();
     lcd.clear();
+    lcd.print("Welcome to NoteLight"); 
 
     if (!SPIFFS.begin(true)) {
         lcd.setCursor(0, 0);
@@ -102,4 +103,4 @@ void loop() {
         delay(100);
     }
     delay(2000);
-}
+}*/
