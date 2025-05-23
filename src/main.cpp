@@ -4,8 +4,8 @@
 
 #define NUM_LEDS 12      // Number of LEDs in your strip
 #define DATA_PIN 0         // Data pin connected to the LED strip
-#define CENTER_BUTTON 15
-#define DOWN_BUTTON 2
+#define CENTER_BUTTON 2
+#define DOWN_BUTTON 15
 #define UP_BUTTON 4
 
 CRGB leds[NUM_LEDS];
